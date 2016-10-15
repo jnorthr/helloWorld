@@ -1,0 +1,2 @@
+hi kids said ${name}
+We are ${greeting} you are here.

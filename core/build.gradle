@@ -1,0 +1,79 @@
+// /Users/jimnorthrop/Dropbox/Projects/helloWorld/core/build.gradle
+apply plugin: 'groovy'
+
+defaultTasks 'clean','build','test','fatJar','copyJarToTemplate', 'copyJarToDownload', 'copyJarToWeb', 'runJob'
+
+ext.mainClassName = "org.jnorthr.hello.Fred";
+ext.deploy = false
+
+
+task say << {println "say core in ${projectDir}"}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.4.7'
+	compile 'org.slf4j:slf4j-api:1.7.14'
+    testCompile 'org.codehaus.groovy:groovy-all:2.4.7'
+
+    // read: https://www.petrikainulainen.net/programming/testing/writing-unit-tests-with-spock-framework-creating-a-gradle-project/
+    testCompile(
+            'junit:junit:4.12',
+            'org.codehaus.groovy:groovy-all:2.4.7',
+			'org.slf4j:slf4j-api:1.7.14',
+            'org.spockframework:spock-core:1.0-groovy-2.4'
+    )
+    testRuntime(
+			'org.slf4j:slf4j-api:1.7.14',
+            'com.athaydes:spock-reports:1.2.12',
+             group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.21'
+    )
+}
+
+task runJob(type: JavaExec) {
+    main = mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    args = ["jnorthr"]
+}
+
+// make our uber jar with all needed dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+
+jar {
+    manifest {
+        attributes("Main-Class": mainClassName )
+    }
+}
+
+
+// copy built jar to template dir
+task copyJarToTemplate(type: Copy) {
+    from jar  //'build/libs/core-1.4.jar'  //from createJar // shortcut for createJar.outputs.files
+    into "${projectDir}/../template/lib"
+} 
+
+// copy built jar to template dir
+task copyJarToWeb(type: Copy) {
+    from fatJar  //'build/libs/core-all-*.jar'  //from createJar // shortcut for createJar.outputs.files
+    into "${projectDir}/../website/lib"
+} 
+
+
+test {
+    testLogging {
+        // Make sure output from standard out or error is shown
+        // in Gradle output.
+        showStandardStreams = true
+    }
+}

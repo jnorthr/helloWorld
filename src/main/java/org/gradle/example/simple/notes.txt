@@ -1,0 +1,4 @@
+= Notes.txt
+Author ${name} <${email}>
+
+We are testing symbol replacements within text files.

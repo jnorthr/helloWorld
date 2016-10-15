@@ -1,0 +1,133 @@
+apply plugin: 'java'
+version = 1.3
+
+// where do you find dependencies
+repositories {
+  mavenCentral()
+}
+
+// A “configuration” is a named grouping of dependencies.
+/*
+The Java plug-in introduces six configurations:
+    archives
+    default
+    compile - The compile configuration contains all dependencies required to compile the code. 
+    runtime
+
+    testCompile - tests have different dependency requirements than the main set of source files. 
+    			They will typically need every single external dependency required to compile the main sources, 
+    			and will need several other modules in addition: a unit testing framework, a mocking framework, 
+    			a test-friendly database driver, or others in this vein. Not only that, but automated tests 
+    			also depend on the compiled output of the main source set. The Java plug-ins introduces the testCompile configuration to handle this collection of files. 
+    			When the compileTestJava task runs the javac compiler, it looks to this configuration to set the compiler’s classpath.
+
+    testRuntime - Often, projects will depend on modules that must be available at runtime, but need not be fetched or made available 
+    			on the compile-time classpath. A common example is a JDBC driver, in which the application code is compiled 
+    			against interfaces in the Java standard libraries, while the implementation is provided by a vendor. 
+    			The java plug-in provides the runtime and testRuntime configurations for this purpose. 
+    			These are used to create deployment archives and execute test code, but do not add to 
+    			the compile-time classpath at all. The runtime configuration does contain the output of the compileJava task, 
+    			of course, since a project’s .class files are necessarily required to run the project.
+
+*/
+configurations {
+  fred
+}
+
+// which artifacts
+dependencies {
+	// https://mvnrepository.com/artifact/org.springframework/spring-core
+	fred group: 'org.springframework', name: 'spring-core', version: '4.1.6.RELEASE'
+	testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+defaultTasks 'copySrc','copyAPI','initConfig','myCopy','mywar','mytar','zip'
+
+// https://docs.gradle.org/current/dsl/org.gradle.api.tasks.Copy.html
+// see: https://www.safaribooksonline.com/library/view/gradle-beyond-the/9781449373801/ch01.html
+// syntax is vital as 'from' keyword needs () pair optionally followed by {} pair if include/excluse
+task copySrc(type: Copy) {
+    from ('src/main/groovy') {
+    	include '**/*.groovy'
+    }
+    from ('src/main') {
+    	include '**/*.txt'
+    	into 'docs'
+    	expand([name:'jnorthr',greeting:'huzzah',email:'j.n@orange.fr'])
+    }
+    from ('src/main/java') {
+      include '**/*.java'
+    }
+
+    includeEmptyDirs = false
+    into 'build/fred'
+}
+
+task copyAPI(type: Copy) {
+    from ('src/main/resources') 
+    	into 'build/fred/docs'
+}
+
+//for Ant filter
+import org.apache.tools.ant.filters.ReplaceTokens
+
+//for including in the copy task
+def dataContent = copySpec {
+    from 'src/test/groovy'
+    into 'albert'
+    include '**/*.groovy'
+}
+
+task initConfig(type: Copy) {
+    from('src/main/config') {
+        include '**/*.properties'
+        include '**/*.xml'
+        exclude '**/*.bak'
+    }
+
+    from('src/main/languages') {
+        rename 'EN_US_(.*)', '$1'
+    }
+    
+    into 'build/fred/target/config'
+    exclude '**/*.bak'
+    filter(ReplaceTokens, tokens: [version: '2.3.1'])
+    filter(ReplaceTokens, tokens: [author: 'jnorthr', gradleVersion: gradle.gradleVersion])
+
+    includeEmptyDirs = false
+
+    with dataContent
+}
+
+// from: http://stackoverflow.com/questions/10001795/conventional-way-of-copying-files-in-gradle-use-copy-task-or-copy-method
+task myCopy(type: Copy) {
+    from('build/libs')
+    into('build/fred/target/libs')
+    include('*.jar')
+    includeEmptyDirs = false
+}
+
+// creates honkey-wrapper-1.3-fred.zip in build/libs
+task zip(type: Zip) {
+    from 'build/fred'
+    destinationDir = file('build/libs') // Depends on the archive type. JARs and WARs go into project.buildDir/libraries. ZIPs and TARs go into project.buildDir/distributions. 
+    baseName = 'honkey'
+    appendix = 'wrapper'
+    classifier = 'fred'
+}
+
+task mywar(type: War) {
+    from 'build/fred'
+}
+
+// creates honkey-wrapper-1.3-fred.zip in build/libs
+task mytar(type: Tar) {
+    from 'build/fred'
+    baseName = 'honkey'
+    appendix = 'wrapper'
+    classifier = 'fred'
+}
+
+println mytar.archiveName
+println relativePath(mytar.destinationDir)
+println relativePath(mytar.archivePath)
