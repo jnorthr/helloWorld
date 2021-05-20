@@ -6,8 +6,7 @@ apply plugin: 'application'
 // copied from /Users/jimnorthrop/Dropbox/Languages/Gradle/GradleMultiProjectTest/build.gradle
 allprojects {
     group = 'org.jnorthr.hello'
-    version = '1.4'
-    task hello << { task -> println "\n\n==================\nI'm project $task.project.name in allprojects of $projectDir" }
+    version = '1.5'
 }
 
 // where do you find dependencies
@@ -18,55 +17,13 @@ repositories {
 
 // which artifacts
 dependencies {
-	testCompile group: 'junit', name: 'junit', version: '4.11'
+	testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 }
 
 defaultTasks 'clean', 'build', 'test', 'jar', 'javadoc', 'distZip'
 
-task hello4 << { print 'hello, ' }
-task world(dependsOn: hello4) << { println 'world' }
+task hello4 { print 'hello, ' }
+
+task hello { print '\n\n==================\nIm project $task.project.name in allprojects of $projectDir' }
 
 mainClassName = "org.gradle.example.simple.HelloWorld"
-
-
-
-
-/*
-The basic rule behind Gradle's behavior is simple. Gradle looks down the hierarchy, starting with the current dir, 
-for tasks with the name hello an executes them. One thing is very important to note. 
-Gradle always evaluates every project of the multi-project build and creates all existing task objects. 
-Then, according to the task name arguments and the current dir, Gradle filters the tasks which should be executed. 
-Because of Gradle's cross project configuration every project has to be evaluated before any task gets executed.
-
- gradle -q distanceToIceberg
-20 nautical miles
-5 nautical miles
-iMac:GradleMultiProjectTest jim$
-
-without -q we have:
-Mac:GradleMultiProjectTest jim$  gradle  distanceToIceberg
-:bluewhale:distanceToIceberg
-20 nautical miles
-:krill:distanceToIceberg
-5 nautical miles
-
-BUILD SUCCESSFUL
-
-The build is executed from the top-levelgradle -q :hello :krill:hello hello project. 
-Neither water nor tropicalFish have a task with the name distanceToIceberg. Gradle does not care. 
-The simple rule mentioned already above is: Execute all tasks down the hierarchy which have this name.
-
-OR we can execute builds by absolute paths like: 
-
-gradle -q :hello :krill:hello hello
-
-The build is executed from the tropicalFish project. We execute the hello tasks of the water, the krill and the tropicalFish project. The first two tasks are specified by absolute path, the last task is executed on the name matching mechanism described above.
-
-
-A project path has the following pattern: It starts always with a colon, which denotes the root project. The root project is the only project in a path that is not specified by its name. The path :bluewhale corresponds to the file system path water/bluewhale in the case of the example above.
-
-The path of a task is simply its project path plus the task name. For example :bluewhale:hello. Within a project you can address a task of the same project just by its name. This is interpreted as a relative path. */
-
-task wrapper(type: Wrapper) {
-    gradleVersion '3.1'
-}

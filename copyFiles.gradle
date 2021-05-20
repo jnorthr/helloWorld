@@ -1,5 +1,5 @@
 apply plugin: 'java'
-version = 1.3
+version = 1.8
 
 // where do you find dependencies
 repositories {
